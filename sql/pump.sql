@@ -1,4 +1,5 @@
 SELECT
+    ps_code2,
 	ps_category,
 	ps_category_feat,
 	status

@@ -350,30 +350,29 @@ def manhole_graph(manhole_data):
             return '类型：其它'
         else:
             return '类型：不明'
-
+    
     def _road_trans(road):
         if road == 9999:
             return '所属道路：不明'
         else:
             return '所属道路：' + road
-
+    
     def _in_road_trans(in_road):
         if in_road == 9999:
             return '所属道路：不明'
         else:
             return '起始道路：' + in_road
-
+    
     def _out_road_trans(out_road):
         if out_road == 9999:
             return '所属道路：不明'
         else:
             return '终点道路：' + out_road
     
-        
     # 处理 manhole_data
     manhole_data.replace(to_replace=[None], value=9999, inplace=True)
     manhole_data.fillna(9999, inplace=True)
-
+    
     manhole_data['manhole_type'] = manhole_data['manhole_type'].apply(_manhole_type_trans)
     manhole_data['manhole_style'] = manhole_data['manhole_style'].apply(_manhole_style_trans)
     manhole_data['cov_dimen1'] = manhole_data['cov_dimen1'].apply(_cov_dimen1_trans)
@@ -383,9 +382,63 @@ def manhole_graph(manhole_data):
     manhole_data['road_name'] = manhole_data['road_name'].apply(_road_trans)
     manhole_data['in_roadname'] = manhole_data['road_name'].apply(_in_road_trans)
     manhole_data['out_roadname'] = manhole_data['road_name'].apply(_out_road_trans)
-
+    
     return manhole_data
 
+
+def pump_graph(pump_data):
+    def _ps_category_trans(ps_category):
+        # 1-雨水、2-污水、3-合建、9-其它
+        if ps_category == 1:
+            return '雨水泵站'
+        elif ps_category == 2:
+            return '污水泵站'
+        elif ps_category == 3:
+            return '合建泵站'
+        elif ps_category == 9:
+            return '其它泵站'
+        else:
+            return '未知泵站'
+    
+    def _ps_category_feat_trans(ps_category_feat):
+        # 1-分流雨水、2-合流防汛、3-立交、4-闸泵、5-分流污水、6-合流截流、7-干线输送、8-分流、9-合流、10-其他
+        if ps_category_feat == 1:
+            return '分类：分流雨水'
+        elif ps_category_feat == 2:
+            return '分类：合流防汛'
+        elif ps_category_feat == 3:
+            return '分类：立交'
+        elif ps_category_feat == 4:
+            return '分类：闸泵'
+        elif ps_category_feat == 5:
+            return '分类：分流污水'
+        elif ps_category_feat == 6:
+            return '分类：合流截流'
+        elif ps_category_feat == 7:
+            return '分类：干线输送'
+        elif ps_category_feat == 8:
+            return '分类：分流'
+        elif ps_category_feat == 9:
+            return '分类：合流'
+        elif ps_category_feat == 10:
+            return '分类：其他'
+        else:
+            return '分类：未知'
+    
+    def _status_trans(status):
+        # 1-拟建、2-已建、3-已废
+        if status == 1: return '拟建'
+        elif status == 2: return '已建'
+        elif status == 3: return '已废'
+
+    pump_data.replace(to_replace=[None], value=9999, inplace=True)
+    pump_data.fillna(9999, inplace=True)
+
+    pump_data['ps_category'] = pump_data['ps_category'].apply(_ps_category_trans)
+    pump_data['ps_category_feat'] = pump_data['ps_category_feat'].apply(_ps_category_feat_trans)
+    pump_data['status'] = pump_data['status'].apply(_status_trans)
+    
+    return pump_data
 
 if __name__ == '__main__':
     # 创建postgresql连接
@@ -394,7 +447,8 @@ if __name__ == '__main__':
     # pipe_data_fir = postgre_con.get_pipe()
     # pipe_data = pipe_graph(pipe_data_fir)
     # 处理水井数据
-    manhole_data_fir = postgre_con.get_manhole()
-    manhole_data = manhole_graph(manhole_data_fir)
+    # manhole_data_fir = postgre_con.get_manhole()
+    # manhole_data = manhole_graph(manhole_data_fir)
     # 处理泵站数据
-    # postgre_con.get_pump()
+    pump_data_fir = postgre_con.get_pump()
+    pump_data = pump_graph(pump_data_fir)
