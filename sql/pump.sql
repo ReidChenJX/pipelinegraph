@@ -1,1 +1,8 @@
-SELECT * FROM public.ps_pumpstation2 WHERE ps_code2 IS NOT NULL
+SELECT
+	ps_category,
+	ps_category_feat,
+	status
+FROM
+	PUBLIC.ps_pumpstation2
+WHERE
+	ps_code2 IS NOT NULL
