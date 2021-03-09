@@ -1,0 +1,1 @@
+SELECT * FROM public.ps_manhole2 WHERE ps_code2 IS NOT NULL
