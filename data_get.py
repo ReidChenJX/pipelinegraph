@@ -444,11 +444,14 @@ if __name__ == '__main__':
     # 创建postgresql连接
     postgre_con = PostgreConnect()
     # 处理管道数据
-    # pipe_data_fir = postgre_con.get_pipe()
-    # pipe_data = pipe_graph(pipe_data_fir)
+    pipe_data_fir = postgre_con.get_pipe()
+    pipe_data = pipe_graph(pipe_data_fir)
+    pipe_data.to_csv('./data/pipe_data.csv', index=False, encoding='gb180308')
     # 处理水井数据
-    # manhole_data_fir = postgre_con.get_manhole()
-    # manhole_data = manhole_graph(manhole_data_fir)
+    manhole_data_fir = postgre_con.get_manhole()
+    manhole_data = manhole_graph(manhole_data_fir)
+    manhole_data.to_csv('./data/manhole_data.csv', index=False, encoding='gb18030')
     # 处理泵站数据
     pump_data_fir = postgre_con.get_pump()
     pump_data = pump_graph(pump_data_fir)
+    pump_data.to_csv('./data/pump_data.csv', index=False, encoding='gb18030')
