@@ -11,6 +11,37 @@ import re
 import os
 
 
+class CreateGraph:
+    def __init__(self, path=None):
+        if path == None:
+            cur_dir = '\\'.join(os.path.abspath(__file__).split('\\')[:-1])
+        else:
+            cur_dir = path
+        self.pipe_path = cur_dir + '\\data\\pipe_data.csv'
+        self.manhole_path = cur_dir + '\\data\\manhole_data.csv'
+        self.pump_path = cur_dir + '\\data\\pump_data.csv'
+        
+        self.graph = Graph("bolt://localhost:7687", username="neo4j", password="123456cctv@")
+        
+        
+    def file_to_node(self):
+        # 读取文件，创建实体，实体属性，关系
+        pipe_data = pd.read_csv(path=self.pipe_path, encoding='gb18030')
+        manhole_data = pd.read_csv(path=self.manhole_path, encoding='gb18030')
+        pump_data = pd.read_csv(path=self.pump_path, encoding='gb18030')
+
+
+
+    
+    def create_node(self):
+        # 创建实体
+        self.graph.schema.create_uniqueness_constraint(label='Person', property_key='name')
+        pass
+    
+    def create_ship(self):
+        # 创建关系
+        pass
+    
 
 
 

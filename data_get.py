@@ -55,6 +55,43 @@ class PostgreConnect:
         return pump_data
 
 
+def dist_change(dist_id):
+    if dist_id == 15:
+        return '浦东新区'
+    elif dist_id == 12:
+        return '闵行区'
+    elif dist_id == 9:
+        return '虹口区'
+    elif dist_id == 1:
+        return '黄浦区'
+    elif dist_id == 16:
+        return '金山区'
+    elif dist_id == 30:
+        return '崇明区'
+    elif dist_id == 5:
+        return '长宁区'
+    elif dist_id == 13:
+        return '宝山区'
+    elif dist_id == 4:
+        return '徐汇区'
+    elif dist_id == 17:
+        return '松江区'
+    elif dist_id == 14:
+        return '嘉定区'
+    elif dist_id == 7:
+        return '普陀区'
+    elif dist_id == 10:
+        return '杨浦区'
+    elif dist_id == 20:
+        return '奉贤区'
+    elif dist_id == 18:
+        return '青浦区'
+    elif dist_id == 6:
+        return '静安区'
+    else:
+        return '地区：无'
+
+
 def pipe_graph(pipe_data):
     def _pipe_level_trans(pipe_level):
         # 1 - 主干管、2 - 次干管（截流管）、3 - 主管、4 - 连管、5 - 接户管、6 - 街坊管、7 - 支管、 8 - 虚拟管道、 9 - 其它
@@ -219,6 +256,7 @@ def pipe_graph(pipe_data):
     pipe_data['road_name'] = pipe_data['road_name'].apply(_road_trans)
     pipe_data['in_roadname'] = pipe_data['in_roadname'].apply(_in_road_trans)
     pipe_data['out_roadname'] = pipe_data['out_roadname'].apply(_out_road_trans)
+    pipe_data['ad_code'] = pipe_data['ad_code'].apply(dist_change)
     
     pipe_tmp = pipe_data[['ps_code2', 'pipe_level', 'pipe_category', 'pressure_type',
                           'shapetype', 'material', 'constr_method', 'rconstr_method', 'status',
@@ -382,6 +420,7 @@ def manhole_graph(manhole_data):
     manhole_data['road_name'] = manhole_data['road_name'].apply(_road_trans)
     manhole_data['in_roadname'] = manhole_data['road_name'].apply(_in_road_trans)
     manhole_data['out_roadname'] = manhole_data['road_name'].apply(_out_road_trans)
+    manhole_data['ad_code'] = manhole_data['ad_code'].apply(dist_change)
     
     return manhole_data
 
@@ -427,18 +466,22 @@ def pump_graph(pump_data):
     
     def _status_trans(status):
         # 1-拟建、2-已建、3-已废
-        if status == 1: return '拟建'
-        elif status == 2: return '已建'
-        elif status == 3: return '已废'
-
+        if status == 1:
+            return '拟建'
+        elif status == 2:
+            return '已建'
+        elif status == 3:
+            return '已废'
+    
     pump_data.replace(to_replace=[None], value=9999, inplace=True)
     pump_data.fillna(9999, inplace=True)
-
+    
     pump_data['ps_category'] = pump_data['ps_category'].apply(_ps_category_trans)
     pump_data['ps_category_feat'] = pump_data['ps_category_feat'].apply(_ps_category_feat_trans)
     pump_data['status'] = pump_data['status'].apply(_status_trans)
     
     return pump_data
+
 
 if __name__ == '__main__':
     # 创建postgresql连接
