@@ -489,7 +489,7 @@ if __name__ == '__main__':
     # 处理管道数据
     pipe_data_fir = postgre_con.get_pipe()
     pipe_data = pipe_graph(pipe_data_fir)
-    pipe_data.to_csv('./data/pipe_data.csv', index=False, encoding='gb180308')
+    pipe_data.to_csv('./data/pipe_data.csv', index=False, encoding='gb18030')
     # 处理水井数据
     manhole_data_fir = postgre_con.get_manhole()
     manhole_data = manhole_graph(manhole_data_fir)
