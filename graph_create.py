@@ -38,9 +38,9 @@ class CreateGraph:
         pump_data_ = pump_data.values
         
         # 一级实例
-        pipe, manhole, pump = list(), list(), list()
-        # 二级实例
-        road, in_road, out_road, ac_code = list(), list(), list(), list()
+        # pipe, manhole, pump = list(),
+        # # 二级实例
+        # road, in_road, out_road, ac_code = list(), list(), list(), list()
         # 一级实例属性
         pipe_info, manhole_info, pump_info = list(), list(), list()
         
@@ -131,26 +131,30 @@ class CreateGraph:
         out_road_all = road_all['out_roadname'].drop_duplicates().tolist()
         
         # 关系 去重 manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode
-        manhole_to_road
-        
-        
+        for a_list in [manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode]:
+            list_to_pd = pd.DataFrame(a_list)
+            list_to_pd.drop_duplicates(inplace=True)
+            a_list = list_to_pd.values.tolist()
         
         return pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
                pipe_to_outroad, pipe_to_accode, road, in_road, out_road_all, \
                manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode
-        
+    
     def create_node(self, label, node_info):
         # 创建一级节点
         for node_name in node_info:
             node = Node(label, name=node_name['ps_code2'], pipe_level=node_name['pipe_level'],
                         pipe_category=node_name['pipe_category'], pressure_type=node_name['pressure_type'],
-                        shape_type=node_name['shapetype'], material=node_name['material'], constr_method=['constr_method'],
-                        rconstr_method=node_name['rconstr_method'], road_name=node_name['road_name'], in_roadname=node_name['in_roadname'],
-                        out_roadname=node_name['out_roadname'], ad_code=node_name['ad_code'], status=node_name['status'])
+                        shape_type=node_name['shapetype'], material=node_name['material'],
+                        constr_method=['constr_method'],
+                        rconstr_method=node_name['rconstr_method'], road_name=node_name['road_name'],
+                        in_roadname=node_name['in_roadname'],
+                        out_roadname=node_name['out_roadname'], ad_code=node_name['ad_code'],
+                        status=node_name['status'])
             self.graph.create(node)
-
-        return
         
+        return
+    
     def create_sec_node(self, label, nodes):
         # 创建二级节点
         for node_name in nodes:
@@ -160,24 +164,11 @@ class CreateGraph:
     
     def create_relation(self):
         
-        
         pass
-        
-    def create_node_relation(self):
-        # 创建实体与关系
-        self.graph.schema.create_uniqueness_constraint(label='Pipe', property_key='name')
-        self.graph.schema.create_uniqueness_constraint(label='Pump', property_key='name')
     
-
-        
-    
-    def create_ship(self,relationship, start_node, end_node, rel_type, rel_name):
+    def create_ship(self, relationship, start_node, end_node, rel_type, rel_name):
         # 去重处理后创建关系
-        set_edges = []
-        for edge in relationship:
-            set_edges.append('###'.join(edge))
-        all = len(set(set_edges))
-        for edge in set(set_edges):
+        for edge in set(relationship):
             edge = edge.split('###')
             p = edge[0]
             q = edge[1]
@@ -188,9 +179,15 @@ class CreateGraph:
             except Exception as e:
                 print(e)
         return
-        
+    
+    def create_node_relation(self):
+        # 创建实体与关系
+        self.graph.schema.create_uniqueness_constraint(label='Pipe', property_key='name')
+        self.graph.schema.create_uniqueness_constraint(label='Pump', property_key='name')
 
 
 if __name__ == '__main__':
     graph = CreateGraph()
-    pipe_to_inroad = graph.file_to_node()
+    pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
+    pipe_to_outroad, pipe_to_accode, road, in_road, out_road_all, \
+    manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = graph.file_to_node()
