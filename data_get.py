@@ -418,8 +418,8 @@ def manhole_graph(manhole_data):
     manhole_data['junc_class'] = manhole_data['junc_class'].apply(_junc_class_trans)
     manhole_data['manhole_category'] = manhole_data['manhole_category'].apply(_manhole_category_trans)
     manhole_data['road_name'] = manhole_data['road_name'].apply(_road_trans)
-    manhole_data['in_roadname'] = manhole_data['road_name'].apply(_in_road_trans)
-    manhole_data['out_roadname'] = manhole_data['road_name'].apply(_out_road_trans)
+    manhole_data['in_roadname'] = manhole_data['in_roadname'].apply(_in_road_trans)
+    manhole_data['out_roadname'] = manhole_data['out_roadname'].apply(_out_road_trans)
     manhole_data['ad_code'] = manhole_data['ad_code'].apply(dist_change)
     
     return manhole_data
