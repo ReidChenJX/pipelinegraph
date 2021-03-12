@@ -20,6 +20,7 @@ class CreateGraph:
         self.pipe_path = cur_dir + '\\data\\pipe_data.csv'
         self.manhole_path = cur_dir + '\\data\\manhole_data.csv'
         self.pump_path = cur_dir + '\\data\\pump_data.csv'
+        self.method = 'Create'
         
         self.graph = Graph("bolt://localhost:7687", username="neo4j", password="123456cctv@")
     
@@ -36,7 +37,7 @@ class CreateGraph:
         manhole_data_ = manhole_data.values
         
         pump_data = pd.read_csv(self.pump_path, encoding='gb18030')
-        pump_data.drop_duplicates('ps_code2',inplace=True)
+        pump_data.drop_duplicates('ps_code2', inplace=True)
         pump_columns = pump_data.columns
         pump_data_ = pump_data.values
         
@@ -161,10 +162,10 @@ class CreateGraph:
             self.graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
-                print(label + '节点以创建完成：{per} %'.format(per=(count / node_10)*10))
+                print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
         
         return
-
+    
     def create_manhole(self, label, node_info):
         # 创建一级节点
         node_nums = len(node_info)
@@ -181,9 +182,9 @@ class CreateGraph:
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
-    
+        
         return
-
+    
     def create_pump(self, label, node_info):
         # 创建一级节点
         node_nums = len(node_info)
@@ -196,7 +197,7 @@ class CreateGraph:
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
-    
+        
         return
     
     def create_sec_node(self, label, nodes):
@@ -210,9 +211,8 @@ class CreateGraph:
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
-            
+        
         return
-    
     
     def create_ship(self, relationship, start_node, end_node, rel_type, rel_name):
         # 去重处理后创建关系
@@ -237,7 +237,7 @@ class CreateGraph:
         # 创建实体与关系
         self.graph.schema.create_uniqueness_constraint(label='pipe', property_key='name')
         self.graph.schema.create_uniqueness_constraint(label='pump', property_key='name')
-
+        
         pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
         pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
         manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = self.file_to_node()
@@ -254,17 +254,20 @@ class CreateGraph:
         self.create_sec_node(label='district', nodes=district)
         
         # 创建节点关系
-        self.create_ship(pipe_to_road, 'pipe','road','belong the way','所属道路')
+        self.create_ship(pipe_to_road, 'pipe', 'road', 'belong the way', '所属道路')
         self.create_ship(pipe_to_inroad, 'pipe', 'in_road', 'starting road', '起始道路')
-        self.create_ship(pipe_to_outroad, 'pipe','out_road', 'end of the road', '终点道路')
-        self.create_ship(pipe_to_accode, 'pipe','district', 'in district', '所属区')
-
+        self.create_ship(pipe_to_outroad, 'pipe', 'out_road', 'end of the road', '终点道路')
+        self.create_ship(pipe_to_accode, 'pipe', 'district', 'in district', '所属区')
+        
         self.create_ship(manhole_to_road, 'manhole', 'road', 'belong the way', '所属道路')
         self.create_ship(manhole_to_inroad, 'manhole', 'in_road', 'starting road', '起始道路')
         self.create_ship(manhole_to_outroad, 'manhole', 'out_road', 'end of the road', '终点道路')
         self.create_ship(manhole_to_accode, 'manhole', 'district', 'in district', '所属区')
-        
+
 
 if __name__ == '__main__':
     graph = CreateGraph()
+    # pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
+    # pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
+    # manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = graph.file_to_node()
     graph.create_node_relation()
