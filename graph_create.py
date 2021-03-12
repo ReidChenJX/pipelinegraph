@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # @time     : 2021/3/9 10:54
 # @Author   : ReidChen
-# Document  ：
+# Document  ：Create node and relationship in graph database.
 
 from py2neo import Graph, Node, Relationship
 import numpy as np
@@ -26,14 +26,17 @@ class CreateGraph:
     def file_to_node(self):
         # 读取文件，创建实体，实体属性，关系
         pipe_data = pd.read_csv(self.pipe_path, encoding='gb18030')
+        pipe_data.drop_duplicates('ps_code2', inplace=True)
         pipe_columns = pipe_data.columns
         pipe_data_ = pipe_data.values
         
         manhole_data = pd.read_csv(self.manhole_path, encoding='gb18030')
+        manhole_data.drop_duplicates('ps_code2', inplace=True)
         manhole_columns = manhole_data.columns
         manhole_data_ = manhole_data.values
         
         pump_data = pd.read_csv(self.pump_path, encoding='gb18030')
+        pump_data.drop_duplicates('ps_code2',inplace=True)
         pump_columns = pump_data.columns
         pump_data_ = pump_data.values
         
@@ -123,12 +126,13 @@ class CreateGraph:
             pump_info.append(pump_property)
         
         # 二级实例：road, in_road, out_road, ac_code
-        road_all = pd.concat([pipe_data[['road_name', 'in_roadname', 'out_roadname']],
-                              manhole_data[['road_name', 'in_roadname', 'out_roadname']]])
+        road_all = pd.concat([pipe_data[['road_name', 'in_roadname', 'out_roadname', 'ad_code']],
+                              manhole_data[['road_name', 'in_roadname', 'out_roadname', 'ad_code']]])
         
         road = road_all['road_name'].drop_duplicates().tolist()
         in_road = road_all['in_roadname'].drop_duplicates().tolist()
-        out_road_all = road_all['out_roadname'].drop_duplicates().tolist()
+        out_road = road_all['out_roadname'].drop_duplicates().tolist()
+        district = road_all['ad_code'].drop_duplicates().tolist()
         
         # 关系 去重 manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode
         for a_list in [manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode]:
@@ -137,11 +141,14 @@ class CreateGraph:
             a_list = list_to_pd.values.tolist()
         
         return pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
-               pipe_to_outroad, pipe_to_accode, road, in_road, out_road_all, \
+               pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
                manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode
     
-    def create_node(self, label, node_info):
+    def create_pipe(self, label, node_info):
         # 创建一级节点
+        node_nums = len(node_info)
+        node_10 = node_nums // 10
+        count = 1
         for node_name in node_info:
             node = Node(label, name=node_name['ps_code2'], pipe_level=node_name['pipe_level'],
                         pipe_category=node_name['pipe_category'], pressure_type=node_name['pressure_type'],
@@ -152,24 +159,70 @@ class CreateGraph:
                         out_roadname=node_name['out_roadname'], ad_code=node_name['ad_code'],
                         status=node_name['status'])
             self.graph.create(node)
+            count += 1
+            if (count / node_10) % 1 == 0:
+                print(label + '节点以创建完成：{per} %'.format(per=(count / node_10)*10))
         
+        return
+
+    def create_manhole(self, label, node_info):
+        # 创建一级节点
+        node_nums = len(node_info)
+        node_10 = node_nums // 10
+        count = 1
+        for node_name in node_info:
+            node = Node(label, name=node_name['ps_code2'], manhole_type=node_name['manhole_type'],
+                        manhole_style=node_name['manhole_style'], cov_dimen1=node_name['cov_dimen1'],
+                        surface_elev=node_name['surface_elev'], in_roadname=node_name['in_roadname'],
+                        road_name=node_name['road_name'], out_roadname=node_name['out_roadname'],
+                        manhole_category=node_name['manhole_category'], ad_code=node_name['ad_code'],
+                        junc_class=node_name['junc_class'])
+            self.graph.create(node)
+            count += 1
+            if (count / node_10) % 1 == 0:
+                print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
+    
+        return
+
+    def create_pump(self, label, node_info):
+        # 创建一级节点
+        node_nums = len(node_info)
+        node_10 = node_nums // 10
+        count = 1
+        for node_name in node_info:
+            node = Node(label, name=node_name['ps_code2'], ps_category=node_name['ps_category'],
+                        ps_category_feat=node_name['ps_category_feat'], status=node_name['status'])
+            self.graph.create(node)
+            count += 1
+            if (count / node_10) % 1 == 0:
+                print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
+    
         return
     
     def create_sec_node(self, label, nodes):
         # 创建二级节点
+        node_nums = len(nodes)
+        node_10 = node_nums // 10
+        count = 1
         for node_name in nodes:
             node = Node(label, name=node_name)
             self.graph.create(node)
+            count += 1
+            if (count / node_10) % 1 == 0:
+                print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
+            
         return
     
-    def create_relation(self):
-        
-        pass
     
     def create_ship(self, relationship, start_node, end_node, rel_type, rel_name):
         # 去重处理后创建关系
+        # :param    relationship    关系列表，二维列表
+        # :param    start_node  p节点label
+        # :param    end_node    q节点label
+        # :param    rel_type    关系名称
+        # :param    rel_name    关系属性，name的值
+        
         for edge in set(relationship):
-            edge = edge.split('###')
             p = edge[0]
             q = edge[1]
             query = "match(p:%s),(q:%s) where p.name='%s'and q.name='%s' create (p)-[rel:%s{name:'%s'}]->(q)" % (
@@ -182,12 +235,36 @@ class CreateGraph:
     
     def create_node_relation(self):
         # 创建实体与关系
-        self.graph.schema.create_uniqueness_constraint(label='Pipe', property_key='name')
-        self.graph.schema.create_uniqueness_constraint(label='Pump', property_key='name')
+        self.graph.schema.create_uniqueness_constraint(label='pipe', property_key='name')
+        self.graph.schema.create_uniqueness_constraint(label='pump', property_key='name')
 
+        pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
+        pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
+        manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = self.file_to_node()
+        
+        # 创建一级节点 pipe_info, manhole_info, pump_info
+        self.create_pipe(label='pipe', node_info=pipe_info)
+        self.create_manhole(label='manhole', node_info=manhole_info)
+        self.create_pump(label='pump', node_info=pump_info)
+        
+        # 创建二级节点
+        self.create_sec_node(label='road', nodes=road)
+        self.create_sec_node(label='in_road', nodes=in_road)
+        self.create_sec_node(label='out_road', nodes=out_road)
+        self.create_sec_node(label='district', nodes=district)
+        
+        # 创建节点关系
+        self.create_ship(pipe_to_road, 'pipe','road','belong the way','所属道路')
+        self.create_ship(pipe_to_inroad, 'pipe', 'in_road', 'starting road', '起始道路')
+        self.create_ship(pipe_to_outroad, 'pipe','out_road', 'end of the road', '终点道路')
+        self.create_ship(pipe_to_accode, 'pipe','district', 'in district', '所属区')
+
+        self.create_ship(manhole_to_road, 'manhole', 'road', 'belong the way', '所属道路')
+        self.create_ship(manhole_to_inroad, 'manhole', 'in_road', 'starting road', '起始道路')
+        self.create_ship(manhole_to_outroad, 'manhole', 'out_road', 'end of the road', '终点道路')
+        self.create_ship(manhole_to_accode, 'manhole', 'district', 'in district', '所属区')
+        
 
 if __name__ == '__main__':
     graph = CreateGraph()
-    pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
-    pipe_to_outroad, pipe_to_accode, road, in_road, out_road_all, \
-    manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = graph.file_to_node()
+    graph.create_node_relation()
