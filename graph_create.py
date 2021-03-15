@@ -21,8 +21,11 @@ class CreateGraph:
         self.manhole_path = cur_dir + '\\data\\manhole_data.csv'
         self.pump_path = cur_dir + '\\data\\pump_data.csv'
         self.method = 'Create'
+        # self.__graph = {'profile':"bolt://localhost:7687",
+        #                 'username':"neo4j",
+        #                 'password':"123456cctv@"}
         
-        self.graph = Graph("bolt://localhost:7687", username="neo4j", password="123456cctv@")
+        self.__graph = Graph("bolt://localhost:7687", username="neo4j", password="123456cctv@")
     
     def file_to_node(self):
         # 读取文件，创建实体，实体属性，关系
@@ -159,7 +162,7 @@ class CreateGraph:
                         in_roadname=node_name['in_roadname'],
                         out_roadname=node_name['out_roadname'], ad_code=node_name['ad_code'],
                         status=node_name['status'])
-            self.graph.create(node)
+            self.__graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
@@ -178,7 +181,7 @@ class CreateGraph:
                         road_name=node_name['road_name'], out_roadname=node_name['out_roadname'],
                         manhole_category=node_name['manhole_category'], ad_code=node_name['ad_code'],
                         junc_class=node_name['junc_class'])
-            self.graph.create(node)
+            self.__graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
@@ -193,7 +196,7 @@ class CreateGraph:
         for node_name in node_info:
             node = Node(label, name=node_name['ps_code2'], ps_category=node_name['ps_category'],
                         ps_category_feat=node_name['ps_category_feat'], status=node_name['status'])
-            self.graph.create(node)
+            self.__graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
@@ -207,7 +210,7 @@ class CreateGraph:
         count = 1
         for node_name in nodes:
             node = Node(label, name=node_name)
-            self.graph.create(node)
+            self.__graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
@@ -228,15 +231,15 @@ class CreateGraph:
             query = "match(p:%s),(q:%s) where p.name='%s'and q.name='%s' create (p)-[rel:%s{name:'%s'}]->(q)" % (
                 start_node, end_node, p, q, rel_type, rel_name)
             try:
-                self.graph.run(query)
+                self.__graph.run(query)
             except Exception as e:
                 print(e)
         return
     
     def create_node_relation(self):
         # 创建实体与关系
-        self.graph.schema.create_uniqueness_constraint(label='pipe', property_key='name')
-        self.graph.schema.create_uniqueness_constraint(label='pump', property_key='name')
+        self.__graph.schema.create_uniqueness_constraint(label='pipe', property_key='name')
+        self.__graph.schema.create_uniqueness_constraint(label='pump', property_key='name')
         
         pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
         pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
