@@ -21,11 +21,11 @@ class CreateGraph:
         self.manhole_path = cur_dir + '\\data\\manhole_data.csv'
         self.pump_path = cur_dir + '\\data\\pump_data.csv'
         self.method = 'Create'
-        # self.__graph = {'profile':"bolt://localhost:7687",
-        #                 'username':"neo4j",
-        #                 'password':"123456cctv@"}
+        self.__graph = {'profile': "bolt://localhost:7687",
+                        'username': "neo4j",
+                        'password': "123456cctv@"}
         
-        self.__graph = Graph("bolt://localhost:7687", username="neo4j", password="123456cctv@")
+        # self.__graph = Graph("bolt://localhost:7687", username="neo4j", password="123456cctv@")
     
     def file_to_node(self):
         # 读取文件，创建实体，实体属性，关系
@@ -109,7 +109,6 @@ class CreateGraph:
                     outroad = manhole_one[cont].strip('终点道路：')
                     manhole_to_outroad.append([manhole_one[0], outroad])
                 
-                
                 elif column == 'ad_code':
                     # 增加 manhole_to_ad_code
                     accode = manhole_one[cont].strip()
@@ -148,7 +147,7 @@ class CreateGraph:
                pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
                manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode
     
-    def create_pipe(self, label, node_info):
+    def create_pipe(self, label, node_info, graph):
         # 创建一级节点
         node_nums = len(node_info)
         node_10 = node_nums // 10
@@ -162,14 +161,15 @@ class CreateGraph:
                         in_roadname=node_name['in_roadname'],
                         out_roadname=node_name['out_roadname'], ad_code=node_name['ad_code'],
                         status=node_name['status'])
-            self.__graph.create(node)
+            
+            graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
         
         return
     
-    def create_manhole(self, label, node_info):
+    def create_manhole(self, label, node_info, graph):
         # 创建一级节点
         node_nums = len(node_info)
         node_10 = node_nums // 10
@@ -181,14 +181,14 @@ class CreateGraph:
                         road_name=node_name['road_name'], out_roadname=node_name['out_roadname'],
                         manhole_category=node_name['manhole_category'], ad_code=node_name['ad_code'],
                         junc_class=node_name['junc_class'])
-            self.__graph.create(node)
+            graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
         
         return
     
-    def create_pump(self, label, node_info):
+    def create_pump(self, label, node_info, graph):
         # 创建一级节点
         node_nums = len(node_info)
         node_10 = node_nums // 10
@@ -196,81 +196,81 @@ class CreateGraph:
         for node_name in node_info:
             node = Node(label, name=node_name['ps_code2'], ps_category=node_name['ps_category'],
                         ps_category_feat=node_name['ps_category_feat'], status=node_name['status'])
-            self.__graph.create(node)
+            graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
         
         return
     
-    def create_sec_node(self, label, nodes):
+    def create_sec_node(self, label, nodes, graph):
         # 创建二级节点
         node_nums = len(nodes)
         node_10 = node_nums // 10
         count = 1
         for node_name in nodes:
             node = Node(label, name=node_name)
-            self.__graph.create(node)
+            graph.create(node)
             count += 1
             if (count / node_10) % 1 == 0:
                 print(label + '节点以创建完成：{per} %'.format(per=(count / node_10) * 10))
         
         return
     
-    def create_ship(self, relationship, start_node, end_node, rel_type, rel_name):
+    def create_ship(self, relationship, start_node, end_node, rel_type, rel_name, graph):
         # 去重处理后创建关系
         # :param    relationship    关系列表，二维列表
         # :param    start_node  p节点label
         # :param    end_node    q节点label
         # :param    rel_type    关系名称
         # :param    rel_name    关系属性，name的值
-        
         for edge in set(relationship):
             p = edge[0]
             q = edge[1]
             query = "match(p:%s),(q:%s) where p.name='%s'and q.name='%s' create (p)-[rel:%s{name:'%s'}]->(q)" % (
                 start_node, end_node, p, q, rel_type, rel_name)
             try:
-                self.__graph.run(query)
+                graph.run(query)
             except Exception as e:
                 print(e)
         return
     
     def create_node_relation(self):
+        graph = Graph(self.__graph)
         # 创建实体与关系
-        self.__graph.schema.create_uniqueness_constraint(label='pipe', property_key='name')
-        self.__graph.schema.create_uniqueness_constraint(label='pump', property_key='name')
+        graph.schema.create_uniqueness_constraint(label='pipe', property_key='name')
+        graph.schema.create_uniqueness_constraint(label='pump', property_key='name')
         
         pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
         pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
         manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = self.file_to_node()
         
         # 创建一级节点 pipe_info, manhole_info, pump_info
-        self.create_pipe(label='pipe', node_info=pipe_info)
-        self.create_manhole(label='manhole', node_info=manhole_info)
-        self.create_pump(label='pump', node_info=pump_info)
+        self.create_pipe(label='pipe', node_info=pipe_info, graph=graph)
+        self.create_manhole(label='manhole', node_info=manhole_info, graph=graph)
+        self.create_pump(label='pump', node_info=pump_info, graph=graph)
         
         # 创建二级节点
-        self.create_sec_node(label='road', nodes=road)
-        self.create_sec_node(label='in_road', nodes=in_road)
-        self.create_sec_node(label='out_road', nodes=out_road)
-        self.create_sec_node(label='district', nodes=district)
+        self.create_sec_node(label='road', nodes=road, graph=graph)
+        self.create_sec_node(label='in_road', nodes=in_road, graph=graph)
+        self.create_sec_node(label='out_road', nodes=out_road, graph=graph)
+        self.create_sec_node(label='district', nodes=district, graph=graph)
         
         # 创建节点关系
-        self.create_ship(pipe_to_road, 'pipe', 'road', 'belong the way', '所属道路')
-        self.create_ship(pipe_to_inroad, 'pipe', 'in_road', 'starting road', '起始道路')
-        self.create_ship(pipe_to_outroad, 'pipe', 'out_road', 'end of the road', '终点道路')
-        self.create_ship(pipe_to_accode, 'pipe', 'district', 'in district', '所属区')
+        self.create_ship(pipe_to_road, 'pipe', 'road', 'belong the way', '所属道路', graph)
+        self.create_ship(pipe_to_inroad, 'pipe', 'in_road', 'starting road', '起始道路', graph)
+        self.create_ship(pipe_to_outroad, 'pipe', 'out_road', 'end of the road', '终点道路', graph)
+        self.create_ship(pipe_to_accode, 'pipe', 'district', 'in district', '所属区', graph)
         
-        self.create_ship(manhole_to_road, 'manhole', 'road', 'belong the way', '所属道路')
-        self.create_ship(manhole_to_inroad, 'manhole', 'in_road', 'starting road', '起始道路')
-        self.create_ship(manhole_to_outroad, 'manhole', 'out_road', 'end of the road', '终点道路')
-        self.create_ship(manhole_to_accode, 'manhole', 'district', 'in district', '所属区')
+        self.create_ship(manhole_to_road, 'manhole', 'road', 'belong the way', '所属道路', graph)
+        self.create_ship(manhole_to_inroad, 'manhole', 'in_road', 'starting road', '起始道路', graph)
+        self.create_ship(manhole_to_outroad, 'manhole', 'out_road', 'end of the road', '终点道路', graph)
+        self.create_ship(manhole_to_accode, 'manhole', 'district', 'in district', '所属区', graph)
 
 
 if __name__ == '__main__':
-    graph = CreateGraph()
-    # pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
-    # pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
-    # manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = graph.file_to_node()
-    graph.create_node_relation()
+    neo4j_graph = CreateGraph()
+    pipe_info, manhole_info, pump_info, pipe_to_road, pipe_to_inroad, \
+    pipe_to_outroad, pipe_to_accode, road, in_road, out_road, district, \
+    manhole_to_road, manhole_to_inroad, manhole_to_outroad, manhole_to_accode = neo4j_graph.file_to_node()
+    neo4j_graph.create_node_relation()
