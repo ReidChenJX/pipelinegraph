@@ -117,14 +117,15 @@ if __name__ == '__main__':
     import_graph = ImportGraph()
     # 获得实例
     pipe_data, manhole_data, pump_data, road, district, pipe_to_road_ship, manhole_to_road_ship = import_graph.file_to_node()
-    
+
     pipe_data.to_csv('./data/node_pipe_data.csv', index=False)
-    
+
     manhole_data.to_csv('./data/node_manhole_data.csv', index=False)
-    
+
     pump_data.to_csv('./data/node_pump_data.csv', index=False)
-    
+
     road.to_csv('./data/node_road.csv', index=False)
     district.to_csv('./data/node_district.csv', index=False)
     pipe_to_road_ship.to_csv('./data/pipe_to_road_ship.csv', index=False)
     manhole_to_road_ship.to_csv('./data/manhole_to_road_ship.csv', index=False)
+    pass
