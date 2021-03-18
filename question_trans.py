@@ -9,9 +9,9 @@
 # 模型构建：特征提取 + word2vec + classifier
 # classifier 需构建相识度，选择可能性最大的
 
-import ahocorasick
-import pandas as pd
+
 import unicodedata
+from pre_data import PreData
 
 
 def is_number(s):
@@ -31,23 +31,25 @@ def is_number(s):
     return False
 
 
-def build_actree(wordlist):
-    # 构造 actree，加速过滤
-    actree = ahocorasick.Automaton()
-    
-    for index, word in enumerate(wordlist):
-        word = str(word)
-        actree.add_word(word, (index, word))
-    actree.make_automaton()
-    return actree
+# def build_actree(wordlist):
+#     # 构造 actree，加速过滤
+#     actree = ahocorasick.Automaton()
+#
+#     for index, word in enumerate(wordlist):
+#         word = str(word)
+#         actree.add_word(word, (index, word))
+#     actree.make_automaton()
+#     return actree
 
 
-class QueryTrans:
+class QueryTrans(PreData):
     """将输入语句，映射为具体的语义问题"""
     
     def __init__(self):
+        super(QueryTrans, self).__init__()
         # 询问管道信息
         self.result = {}
+        
         self.pipe_ques = ['管道', '管网', '官网', '观望', '水管', '下水管', '管', 'guan']
         # 询问泵站信息
         self.pump_ques = ['泵站', '排水站', '排水泵站', '泵']
@@ -62,21 +64,21 @@ class QueryTrans:
         # 根据水井询问管道
         self.manhole_pipe = []
         
-        # 道路列表与道路actree 树
-        self.road_list = [w[0] for w in pd.read_csv('./data/node_road.csv', usecols=[0]).values.tolist()]
-        self.road_actree = build_actree(self.road_list)
-        
-        # 水井列表与水井actree 树
-        self.manhole_list = [w[0] for w in pd.read_csv('./data/node_manhole_data.csv', usecols=[0]).values.tolist()]
-        self.manhole_actree = build_actree(self.manhole_list)
-        
-        # 泵站列表与泵站actree 树
-        self.pump_list = [w[0] for w in pd.read_csv('./data/node_pump_data.csv', usecols=[0]).values.tolist()]
-        self.pump_actree = build_actree(self.pump_list)
-        
-        # 管道列表与管道actree 树
-        self.pipe_list = [w[0] for w in pd.read_csv('./data/node_pipe_data.csv', usecols=[0]).values.tolist()]
-        self.pipe_actree = build_actree(self.pipe_list)
+        # # 道路列表与道路actree 树
+        # self.road_list = [w[0] for w in pd.read_csv('./data/node_road.csv', usecols=[0]).values.tolist()]
+        # self.road_actree = build_actree(self.road_list)
+        #
+        # # 水井列表与水井actree 树
+        # self.manhole_list = [w[0] for w in pd.read_csv('./data/node_manhole_data.csv', usecols=[0]).values.tolist()]
+        # self.manhole_actree = build_actree(self.manhole_list)
+        #
+        # # 泵站列表与泵站actree 树
+        # self.pump_list = [w[0] for w in pd.read_csv('./data/node_pump_data.csv', usecols=[0]).values.tolist()]
+        # self.pump_actree = build_actree(self.pump_list)
+        #
+        # # 管道列表与管道actree 树
+        # self.pipe_list = [w[0] for w in pd.read_csv('./data/node_pipe_data.csv', usecols=[0]).values.tolist()]
+        # self.pipe_actree = build_actree(self.pipe_list)
     
     def model_select(self):
         # 选择模型
@@ -166,13 +168,12 @@ class QueryTrans:
         # 未能匹配具体管道，进行提醒
         if pipe_flag > 0 and 'pipe' not in self.result:
             print('监测到管道关键字，但未匹配到正确编号，请按照泵站唯一编号进行搜索 ！！！')
-        
-        return self.result
     
-    def means_trans(self, ):
+    def means_trans(self, que_input):
         # 语义目的转化
         # param input_result: 一个包含关键字与关键字位置的字典
         # return intentions: 意图目标
+        self.input_trans(que_input)
         
         intentions = []
         types = []  # 实体类型
@@ -181,11 +182,11 @@ class QueryTrans:
         
         # 记录 types 中 各类型的数量
         pipe_nums, manhole_nums, pump_nums, road_nums = 0, 0, 0, 0
-        for type in types:
-            if type == 'road': road_nums = len(self.result['road'])
-            if type == 'pipe': pipe_nums = len(self.result['pipe'])
-            if type == 'manhole': manhole_nums = len(self.result['manhole'])
-            if type == 'pump': pump_nums = len(self.result['pump'])
+        for ty in types:
+            if ty == 'road': road_nums = len(self.result['road'])
+            if ty == 'pipe': pipe_nums = len(self.result['pipe'])
+            if ty == 'manhole': manhole_nums = len(self.result['manhole'])
+            if ty == 'pump': pump_nums = len(self.result['pump'])
         
         # 仅仅查询管道
         if 'pipe' in types and not sum([road_nums, manhole_nums, pump_nums]):
@@ -253,15 +254,8 @@ class QueryTrans:
                 intentions.append(intention)
         
         self.result['intentions'] = intentions
-    
-    def query_trans(self):
-        # 提问方式转化
         
-        pass
-    
-    def neo4j_anw(self):
-        # 在neo4j 中选择答案
-        pass
+        return self.result
 
 
 if __name__ == "__main__":
@@ -273,8 +267,7 @@ if __name__ == "__main__":
     while True:
         try:
             ques = input('提问：')
-            query_trans.input_trans(ques)
+            result = query_trans.means_trans(ques)
+            print(result)
         except:
             break
-    
-    pass
